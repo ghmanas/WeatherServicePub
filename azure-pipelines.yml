@@ -1,0 +1,73 @@
+# azure-pipelines.yml
+
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*  # Trigger build on main and feature branches
+
+pool:
+  vmImage: 'ubuntu-latest'  # You can use 'windows-latest' if your project requires Windows
+
+variables:
+  buildConfiguration: 'Release'
+  dotnetSdkVersion: '8.x'  # Make sure this matches your .NET 8 SDK version
+
+stages:
+  - stage: Build
+    displayName: 'Build Stage'
+    jobs:
+      - job: Build
+        displayName: 'Build Job'
+        steps:
+
+          # Checkout the code
+          - task: Checkout@2
+            displayName: 'Checkout repository'
+
+          # Setup .NET SDK
+          - task: UseDotNet@2
+            displayName: 'Install .NET SDK'
+            inputs:
+              packageType: 'sdk'
+              version: $(dotnetSdkVersion)
+              installationPath: $(Agent.ToolsDirectory)/dotnet
+
+          # Restore dependencies
+          - task: DotNetCoreCLI@2
+            displayName: 'Restore dependencies'
+            inputs:
+              command: 'restore'
+              projects: '**/*.csproj'
+
+          # Build the project
+          - task: DotNetCoreCLI@2
+            displayName: 'Build project'
+            inputs:
+              command: 'build'
+              projects: '**/*.csproj'
+              arguments: '--configuration $(buildConfiguration)'
+
+          # Run tests (optional, if you have unit tests)
+          - task: DotNetCoreCLI@2
+            displayName: 'Run unit tests'
+            inputs:
+              command: 'test'
+              projects: '**/*.csproj'
+              arguments: '--configuration $(buildConfiguration)'
+
+          # Publish the project
+          - task: DotNetCoreCLI@2
+            displayName: 'Publish project'
+            inputs:
+              command: 'publish'
+              projects: '**/*.csproj'
+              arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+
+          # Publish the build artifact (optional, for deployment purposes)
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish artifacts'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'

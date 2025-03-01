@@ -1,0 +1,98 @@
+#
+
+stages:
+  - stage: Dev
+    displayName: 'Development Environment'
+    jobs:
+      - job: DevDeploy
+        displayName: 'Deploy to Development WebJob'
+        pool:
+          vmImage: 'ubuntu-latest'
+        variables:
+          - group: 'dev-appsettings'  # Use the Dev appsettings variable group
+        steps:
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download build artifacts'
+            inputs:
+              buildType: 'current'
+              downloadType: 'specific'
+              artifactName: 'drop'
+              downloadPath: '$(Pipeline.Workspace)'
+
+          # Deploy to Dev as a WebJob
+          - task: AzureWebApp@1
+            displayName: 'Deploy to Azure Web App WebJob (Dev)'
+            inputs:
+              azureSubscription: '<Azure Service Connection>'
+              appName: '<Your-App-Service-Name-Dev>'
+              package: '$(Pipeline.Workspace)/drop/**/*'
+              deploymentMethod: 'zipDeploy'
+              webJobName: '<Your-WebJob-Name-Dev>'  # Specify the WebJob name
+              isWebJob: true
+              appSettings: |
+                -key1 $(appSettingsKey1)
+                -key2 $(appSettingsKey2)
+
+  - stage: QA
+    displayName: 'Quality Assurance Environment'
+    jobs:
+      - job: QADploy
+        displayName: 'Deploy to QA WebJob'
+        pool:
+          vmImage: 'ubuntu-latest'
+        variables:
+          - group: 'qa-appsettings'  # Use the QA appsettings variable group
+        steps:
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download build artifacts'
+            inputs:
+              buildType: 'current'
+              downloadType: 'specific'
+              artifactName: 'drop'
+              downloadPath: '$(Pipeline.Workspace)'
+
+          # Deploy to QA as a WebJob
+          - task: AzureWebApp@1
+            displayName: 'Deploy to Azure Web App WebJob (QA)'
+            inputs:
+              azureSubscription: '<Azure Service Connection>'
+              appName: '<Your-App-Service-Name-QA>'
+              package: '$(Pipeline.Workspace)/drop/**/*'
+              deploymentMethod: 'zipDeploy'
+              webJobName: '<Your-WebJob-Name-QA>'  # Specify the WebJob name
+              isWebJob: true
+              appSettings: |
+                -key1 $(appSettingsKey1)
+                -key2 $(appSettingsKey2)
+
+  - stage: Prod
+    displayName: 'Production Environment'
+    jobs:
+      - job: ProdDeploy
+        displayName: 'Deploy to Production WebJob'
+        pool:
+          vmImage: 'ubuntu-latest'
+        variables:
+          - group: 'prod-appsettings'  # Use the Prod appsettings variable group
+        steps:
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download build artifacts'
+            inputs:
+              buildType: 'current'
+              downloadType: 'specific'
+              artifactName: 'drop'
+              downloadPath: '$(Pipeline.Workspace)'
+
+          # Deploy to Prod as a WebJob
+          - task: AzureWebApp@1
+            displayName: 'Deploy to Azure Web App WebJob (Prod)'
+            inputs:
+              azureSubscription: '<Azure Service Connection>'
+              appName: '<Your-App-Service-Name-Prod>'
+              package: '$(Pipeline.Workspace)/drop/**/*'
+              deploymentMethod: 'zipDeploy'
+              webJobName: '<Your-WebJob-Name-Prod>'  # Specify the WebJob name
+              isWebJob: true
+              appSettings: |
+                -key1 $(appSettingsKey1)
+                -key2 $(appSettingsKey2)
